@@ -10,7 +10,7 @@ on:
 jobs:
   #Test's job
   tests:
-    name: Unit tests
+    name: Build & Test
     #Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
     #Job's steps
@@ -31,5 +31,5 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       #Build & Test
-      - name: Run Tests
+      - name: Run Build
         run: mvn clean install
