@@ -1,32 +1,26 @@
-#Workflow name
 name: Backend Pipeline
 on:
-  #Manually trigger workflow runs
+  # Manually trigger workflow runs
   workflow_dispatch:
-  #Trigger the workflow on push from the main branch
+  # Trigger the workflow on push from the main branch
   push:
     branches:
       - main
-      - dev
-      - qa
-      - prod
 jobs:
-  #Test's job
   tests:
-    name: Build & Test
-    #Run on Ubuntu using the latest version
+    name: Build backend app
+    # Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
-    #Job's steps
     steps:
-      #Check-out your repository under $GITHUB_WORKSPACE, so your workflow can access it
+      # Check-out your repository under $GITHUB_WORKSPACE, so your workflow can access it
       - uses: actions/checkout@v1
-      #Set up JDK 11
+      # Set up JDK 11
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           java-version: '11'
           distribution: adopt
-      #Set up Maven cache
+      # Set up Maven cache
       - name: Cache Maven packages
         #This action allows caching dependencies and build outputs to improve workflow execution time.
         uses: actions/cache@v1
@@ -34,9 +28,18 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      #Build & Test
+      # Build & Test
       - name: Run Build
         run: mvn clean install
+
+      # Create and print the new version
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H.%M.%S')"
+      - name: Print version
+        run: echo "Version - ${{ steps.date.outputs.date }}"
+
+      # Docker build step
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -54,6 +57,12 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/toptal-backend:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/toptal-backend:${{ steps.date.outputs.date }}
           context: .
           file: Dockerfile
+
+      # Create a new git tag
+      - uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ steps.date.outputs.date }}
+          message: "TAG was created at ${{ steps.date.outputs.date }}"
