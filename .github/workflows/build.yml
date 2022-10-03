@@ -5,8 +5,10 @@ on:
     branches:
       - main
 jobs:
-  tests:
+  build:
     name: Build backend app
+    outputs:
+      version: ${{ steps.date.outputs.date }}
     # Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
     steps:
@@ -64,3 +66,11 @@ jobs:
         with:
           tag: ${{ steps.date.outputs.date }}
           message: "TAG was created at ${{ steps.date.outputs.date }}"
+
+  backend-apps-deployment:
+    uses: gtskaushik/toptal-ops-temp/.github/workflows/backend-deploy.yml@main
+    with:
+      environment: "dev"
+      image_tag: ${{ needs.build.outputs.version }}
+    secrets: inherit
+    needs: build
