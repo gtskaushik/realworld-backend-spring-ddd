@@ -7,8 +7,6 @@ on:
 jobs:
   build:
     name: Build backend app
-    outputs:
-      version: ${{ steps.date.outputs.date }}
     # Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
     steps:
@@ -67,10 +65,11 @@ jobs:
           tag: ${{ steps.date.outputs.date }}
           message: "TAG was created at ${{ steps.date.outputs.date }}"
 
-  backend-apps-deployment:
-    uses: gtskaushik/toptal-ops-temp/.github/workflows/backend-deploy.yml@main
-    with:
-      environment: "dev"
-      image_tag: ${{ needs.build.outputs.version }}
-    secrets: inherit
-    needs: build
+      # Deploy to dev
+      - name: Dev deployment
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
+            https://api.github.com/repos/gtskaushik/toptal-ops-temp/actions/workflows/backend-deploy.yml/dispatches \
+            -d '{"ref":"main","inputs":{"environment":"dev","image_tag":"${{ steps.date.outputs.date }}"}}'
